@@ -35,6 +35,14 @@ with:
       tags:
         - extract
 
+    /ner/extract:
+      methods: ["POST"]
+      summary: Extract NER
+      tags:
+        - ner
+
+
+
 #
 #    /work:
 #      methods: [ "POST" ]
@@ -58,14 +66,26 @@ with:
 executors:
   - name: extract_t
     uses:
-#      jtype: TextExtractionExecutor
-      jtype: ExtractExecutor
+      jtype: TextExtractionExecutor
       metas:
         py_modules:
 #          - marie_server.executors.extract.mserve_torch
           - marie.executor.text
     timeout_ready: 3000000
     replicas: 1
+
+#  - name: ner_t
+#    uses:
+#      jtype: NerExtractionExecutor
+#      with:
+#        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
+#      metas:
+#        py_modules:
+##          - marie_server.executors.ner.mserve_torch
+#          - marie.executor.ner
+#    timeout_ready: 3000000
+#    replicas: 1
+
 
 #  - name: ner_t
 #    uses:

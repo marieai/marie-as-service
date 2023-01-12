@@ -11,13 +11,13 @@ def extend_rest_interface(app: 'FastAPI') -> 'FastAPI':
     """
 
     from .executors.extract.mserve_torch import (
-        extend_rest_interface_extract_mixin,
+        extend_rest_interface_extract,
     )
     from .executors.ner.mserve_torch import (
-        extend_rest_interface_ner_mixin,
+        extend_rest_interface_ner,
     )
 
-    extend_rest_interface_extract_mixin(app)
-    extend_rest_interface_ner_mixin(app)
+    extend_rest_interface_extract(app)
+    extend_rest_interface_ner(app)
 
     return app
