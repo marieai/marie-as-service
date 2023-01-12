@@ -16,8 +16,12 @@ def extend_rest_interface(app: 'FastAPI') -> 'FastAPI':
     from .executors.ner.mserve_torch import (
         extend_rest_interface_ner,
     )
+    from .executors.overlay.mserve_torch import (
+        extend_rest_interface_overlay,
+    )
 
     extend_rest_interface_extract(app)
     extend_rest_interface_ner(app)
+    extend_rest_interface_overlay(app)
 
     return app
