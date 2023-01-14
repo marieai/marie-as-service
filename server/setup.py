@@ -78,8 +78,8 @@ setup(
     ],
     project_urls={
         'Documentation': 'https://docs.marieai.co',
-        'Source': 'https://github.com/gregbugaj/marie-ai/',
-        'Tracker': 'https://github.com/gregbugaj/marie-ai/issues',
+        'Source': 'https://github.com/marieai/marie-ai/',
+        'Tracker': 'https://github.com/marieai/marie-ai/issues',
     },
     keywords=(
         'marie-ai ocr icr index elastic neural-network encoding '

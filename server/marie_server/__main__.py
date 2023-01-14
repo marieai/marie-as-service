@@ -1,7 +1,7 @@
 import inspect
 import os
 import sys
-import marie
+import marie.helper
 
 from marie_server.rest_extension import extend_rest_interface
 
