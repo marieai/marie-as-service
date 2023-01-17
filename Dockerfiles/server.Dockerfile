@@ -24,17 +24,10 @@ COPY server /server
 ARG PIP_TAG
 
 RUN python --version
-RUN pwd
+RUN pip install flask_restful
 
-
-# install marie again but this time no deps
-RUN cd /server && \
-    pip install  --compile . && \
-    rm -rf /tmp/* && rm -rf /marie
-
-
-#RUN pip install --default-timeout=1000 --compile ./server/ \
-#    && if [ -n "${PIP_TAG}" ]; then pip install --default-timeout=1000 --compile "./server[${PIP_TAG}]" ; fi
+RUN pip install --default-timeout=1000 --compile /server/ \
+    && if [ -n "${PIP_TAG}" ]; then pip install --default-timeout=1000 --compile "./server[${PIP_TAG}]" ; fi
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
@@ -49,4 +42,10 @@ RUN groupadd -g ${GROUP_ID} ${USER_NAME} &&\
 
 USER ${USER_NAME}
 
+#ENTRYPOINT ["marie", "flow"]
 ENTRYPOINT ["python", "-m", "marie_server"]
+#ENTRYPOINT ["pip", "show", "timm"]
+
+# Execute
+# docker run --gpus all --rm -it marieai/marie-server:3.0-cuda
+# docker run --gpus all --rm -it --network=host -e JINA_MP_START_METHOD='spawn' -e MARIE_DEFAULT_MOUNT='/etc/marie' -v /mnt/data/marie-ai/config:/etc/marie/config:ro -v /mnt/data/marie-ai/model_zoo:/etc/marie/model_zoo:rw marieai/marie-server:3.0-cuda

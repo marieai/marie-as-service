@@ -20,12 +20,6 @@ def extend_rest_interface_extract(app: FastAPI) -> None:
         host='0.0.0.0', port=52000, protocol='grpc', request_size=1, asyncio=True
     )
 
-    @app.get('/api/text/extractZZ', tags=['text', 'rest-api'])
-    async def text_extract():
-        default_logger.info("Executing text_extract")
-
-        return {"message": "ABC"}
-
     @app.post('/api/text/extract-test', tags=['text', 'rest-api'])
     async def text_extract_post_test(request: Request):
         default_logger.info("Executing text_extract_post")

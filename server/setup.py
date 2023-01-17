@@ -41,16 +41,16 @@ setup(
     zip_safe=False,
     setup_requires=['setuptools>=18.0', 'wheel'],
     install_requires=[
-        'torch',
-        'torchvision',
+        # 'torch',
+        # 'torchvision',
         'marie>=3.0.0',
     ],
     extras_require={
-        'onnx': [
-            'onnxruntime',
-            'onnx',
-            'onnxmltools',
-        ]
+        # 'onnx': [
+        #     'onnxruntime',
+        #     'onnx',
+        #     'onnxmltools',
+        # ]
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
