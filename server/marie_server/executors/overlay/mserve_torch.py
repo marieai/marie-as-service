@@ -55,9 +55,15 @@ def extend_rest_interface_overlay(app: FastAPI) -> None:
                 # We get raw response `marie.types.request.data.DataRequest`
                 # and we will extract the returned payload (Dictionary object)
                 docs = resp.data.docs
-                results = resp.parameters["__results__"]
-                payload = list(results.values())[0]
-                print(payload)
+                if "__results__" in resp.parameters:
+                    results = resp.parameters["__results__"]
+                    payload = list(results.values())[0]
+                    print(payload)
+                else:
+                    return {
+                        "status": "FAILED",
+                        "message": "are you calling valid endpoint, __results__ missing in params",
+                    }
 
             return payload
         except BaseException as error:

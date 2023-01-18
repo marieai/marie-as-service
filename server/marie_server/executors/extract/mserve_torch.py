@@ -50,6 +50,12 @@ def extend_rest_interface_extract(app: FastAPI) -> None:
 
         return {"message": f"ZZZ : {len(outputs)}", "out_text": out_text}
 
+    @app.get('/api/extract', tags=['text', 'rest-api'])
+    async def text_extract_get(request: Request):
+        default_logger.info("Executing text_extract_get")
+
+        return {"message": "reply"}
+
     @app.post('/api/extract', tags=['text', 'rest-api'])
     async def text_extract_post(request: Request):
         default_logger.info("Executing text_extract_post")
@@ -81,10 +87,17 @@ def extend_rest_interface_extract(app: FastAPI) -> None:
                 # We get raw response `marie.types.request.data.DataRequest`
                 # and we will extract the returned payload (Dictionary object)
                 docs = resp.data.docs
-                results = resp.parameters["__results__"]
-                payload = list(results.values())[0]
-                print(payload)
+                status = resp.status
 
+                if "__results__" in resp.parameters:
+                    results = resp.parameters["__results__"]
+                    payload = list(results.values())[0]
+                    print(payload)
+                else:
+                    return {
+                        "status": "FAILED",
+                        "message": "are you calling valid endpoint, __results__ missing in params",
+                    }
             return payload
         except BaseException as error:
             default_logger.error("Extract error", error)

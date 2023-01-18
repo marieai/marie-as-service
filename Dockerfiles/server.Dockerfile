@@ -46,5 +46,3 @@ USER ${USER_NAME}
 ENTRYPOINT ["python", "-m", "marie_server"]
 #ENTRYPOINT ["pip", "show", "timm"]
 
-# Execute
-# docker run --gpus all --rm -it marieai/marie-server:3.0-cuda

@@ -23,12 +23,6 @@ with:
       tags:
         - extract
 
-#    /api/extract:
-#      methods: ["POST"]
-#      summary: Extract data
-#      tags:
-#        - extract
-
     /text/status:
       methods: ["POST"]
       summary: Extract data
@@ -41,48 +35,29 @@ with:
       tags:
         - ner
 
-#
-#    /work:
-#      methods: [ "POST" ]
-#      summary: Work
-#      tags:
-#        - extract
-#
-#    /ner:
-#      methods: ["POST"]
-#      summary: Extract data
-#      tags:
-#        - ner
-#
-#    /ner-work:
-#      methods: [ "POST" ]
-#      summary: Work
-#      tags:
-#        - ner
-
-
 executors:
-  - name: extract_t
-    uses:
-      jtype: TextExtractionExecutor
-      metas:
-        py_modules:
-#          - marie_server.executors.extract.mserve_torch
-          - marie.executor.text
-    timeout_ready: 3000000
-    replicas: 1
-
-#  - name: ner_t
+#  - name: extract_t
 #    uses:
-#      jtype: NerExtractionExecutor
-#      with:
-#        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
+#      jtype: TextExtractionExecutor
+##      jtype: ExtractExecutor
 #      metas:
 #        py_modules:
-##          - marie_server.executors.ner.mserve_torch
-#          - marie.executor.ner
+##          - marie_server.executors.extract.mserve_torch
+#          - marie.executor.text
 #    timeout_ready: 3000000
 #    replicas: 1
+
+  - name: ner_t
+    uses:
+      jtype: NerExtractionExecutor
+      with:
+        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
+      metas:
+        py_modules:
+#          - marie_server.executors.ner.mserve_torch
+          - marie.executor.ner
+    timeout_ready: 3000000
+    replicas: 1
 
 
 #  - name: overlay_tls
