@@ -2,6 +2,8 @@ import inspect
 import os
 import sys
 import marie.helper
+from marie.utils.device import gpu_device_count
+
 from marie.constants import (
     __model_path__,
     __config_dir__,
@@ -33,10 +35,15 @@ if __name__ == "__main__":
     print(f"__marie_home__ = {__marie_home__}")
     print(f"__cache_path__ = {__cache_path__}")
     print(f"_input = {_input}")
+    print(gpu_device_count())
 
     f = Flow.load_config(
         _input,
         extra_search_paths=[os.path.dirname(inspect.getfile(inspect.currentframe()))],
+        substitute=True,
+        context={
+            'gpu_device_count': gpu_device_count(),
+        },
     )
 
     # Downloading: "https://github.com/pytorch/fairseq/zipball/main" to /home/marie-server/.cache/torch/hub/main.zip

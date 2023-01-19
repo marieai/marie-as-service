@@ -45,7 +45,10 @@ executors:
 #          - marie_server.executors.extract.mserve_torch
           - marie.executor.text
     timeout_ready: 3000000
-    replicas: 1
+    replicas: ${{ CONTEXT.gpu_device_count }}
+    env :
+      CUDA_VISIBLE_DEVICES: RR
+
 
 #  - name: ner_t
 #    uses:
