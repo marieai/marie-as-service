@@ -2,9 +2,9 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, Request
 from marie import Client
-from marie.api import extract_payload
 from marie.logging.predefined import default_logger
-from marie.utils.docs import docs_from_file, array_from_docs
+
+from marie_server.rest_extension import parse_request_to_docs, parse_response_to_payload
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi import FastAPI
@@ -24,42 +24,18 @@ def extend_rest_interface_ner(app: FastAPI) -> None:
     async def text_ner_post(request: Request):
         default_logger.info("Executing text_ner_post")
         try:
-            payload = await request.json()
-            # every request should contain queue_id if not present it will default to '0000-0000-0000-0000'
-            queue_id = (
-                payload["queue_id"] if "queue_id" in payload else "0000-0000-0000-0000"
-            )
-
-            tmp_file, checksum, file_type = extract_payload(payload, queue_id)
-            input_docs = docs_from_file(tmp_file)
-            out_docs = array_from_docs(input_docs)
-            payload["data"] = None
-
-            args = {
-                "queue_id": queue_id,
-                "payload": payload,
-            }
+            parameters, input_docs = await parse_request_to_docs(request)
             payload = {}
 
             async for resp in c.post(
                 '/ner/extract',
                 input_docs,
                 request_size=-1,
-                parameters=args,
+                parameters=parameters,
                 return_responses=True,
             ):
-                # We get raw response `marie.types.request.data.DataRequest`
-                # and we will extract the returned payload (Dictionary object)
-                docs = resp.data.docs
-                if "__results__" in resp.parameters:
-                    results = resp.parameters["__results__"]
-                    payload = list(results.values())[0]
-                    print(payload)
-                else:
-                    return {
-                        "status": "FAILED",
-                        "message": "are you calling valid endpoint, __results__ missing in params",
-                    }
+                print(type(resp))
+                payload = parse_response_to_payload(resp)
             return payload
         except BaseException as error:
             default_logger.error("Extract error", error)

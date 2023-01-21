@@ -36,32 +36,42 @@ with:
         - ner
 
 executors:
-  - name: extract_t
+#  - name: extract_t
+#    uses:
+##      jtype: TextExtractionExecutor
+#      jtype: ExtractExecutor
+#      metas:
+#        py_modules:
+##          - marie_server.executors.extract.mserve_torch
+#          - marie.executor.text
+#    timeout_ready: 3000000
+#    replicas: ${{ CONTEXT.gpu_device_count }}
+#    env :
+#      CUDA_VISIBLE_DEVICES: RR
+
+  - name: ner_t
     uses:
-#      jtype: TextExtractionExecutor
-      jtype: ExtractExecutor
+      jtype: NerExtractionExecutor
+      with:
+        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
+        storage_enabled : True
+        storage_conf :
+          provider: postgresql
+          hostname: 127.0.0.1
+          port: 5432
+          username: postgres
+          password: 123456
+          database: postgres
+          default_table: ner_executor
       metas:
         py_modules:
-#          - marie_server.executors.extract.mserve_torch
-          - marie.executor.text
+#          - marie_server.executors.ner.mserve_torch
+          - marie.executor.ner
     timeout_ready: 3000000
+#    replicas: 1
     replicas: ${{ CONTEXT.gpu_device_count }}
     env :
       CUDA_VISIBLE_DEVICES: RR
-
-
-#  - name: ner_t
-#    uses:
-#      jtype: NerExtractionExecutor
-#      with:
-#        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
-#      metas:
-#        py_modules:
-##          - marie_server.executors.ner.mserve_torch
-#          - marie.executor.ner
-#    timeout_ready: 3000000
-#    replicas: 1
-
 
 #  - name: overlay_tls
 #    uses:
@@ -76,6 +86,7 @@ executors:
 #          username: postgres
 #          password: 123456
 #          database: postgres
+#          default_table: overlay_executor
 #      metas:
 #        py_modules:
 ##          - marie_server.executors.ner.mserve_torch
