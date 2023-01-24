@@ -34,7 +34,6 @@ def extend_rest_interface_ner(app: FastAPI) -> None:
                 parameters=parameters,
                 return_responses=True,
             ):
-                print(type(resp))
                 payload = parse_response_to_payload(resp)
             return payload
         except BaseException as error:

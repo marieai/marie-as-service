@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from typing import Any
 
 from fastapi import FastAPI, Request
 from marie import Client, DocumentArray
@@ -7,6 +8,12 @@ from marie import Document
 from marie.api import extract_payload
 from marie.logging.predefined import default_logger
 from marie.utils.docs import docs_from_file, array_from_docs
+
+from marie_server.rest_extension import parse_response_to_payload
+
+
+def mark_request_as_complete(request_id: str):
+    default_logger.info(f"Executing mark_request_as_complete : {request_id}")
 
 
 def extend_rest_interface_extract(app: FastAPI) -> None:
@@ -25,7 +32,6 @@ def extend_rest_interface_extract(app: FastAPI) -> None:
         default_logger.info("Executing text_extract_post")
         payload = await request.json()
         print(payload.keys())
-        print(request)
         inputs = DocumentArray.empty(6)
 
         # async inputs for the client
@@ -53,19 +59,17 @@ def extend_rest_interface_extract(app: FastAPI) -> None:
     @app.get('/api/extract', tags=['text', 'rest-api'])
     async def text_extract_get(request: Request):
         default_logger.info("Executing text_extract_get")
-
         return {"message": "reply"}
 
-    @app.post('/api/extract', tags=['text', 'rest-api'])
-    async def text_extract_post(request: Request):
-        default_logger.info("Executing text_extract_post")
+    async def process_request(request_id: str, payload: Any):
         try:
-            payload = await request.json()
+            default_logger.info(f"Starting request: {request_id}")
             # every request should contain queue_id if not present it will default to '0000-0000-0000-0000'
             queue_id = (
                 payload["queue_id"] if "queue_id" in payload else "0000-0000-0000-0000"
             )
 
+            await asyncio.sleep(4)
             tmp_file, checksum, file_type = extract_payload(payload, queue_id)
             input_docs = docs_from_file(tmp_file)
             out_docs = array_from_docs(input_docs)
@@ -84,24 +88,22 @@ def extend_rest_interface_extract(app: FastAPI) -> None:
                 parameters=args,
                 return_responses=True,
             ):
-                # We get raw response `marie.types.request.data.DataRequest`
-                # and we will extract the returned payload (Dictionary object)
-                docs = resp.data.docs
-                status = resp.status
+                payload = parse_response_to_payload(resp)
 
-                if "__results__" in resp.parameters:
-                    results = resp.parameters["__results__"]
-                    payload = list(results.values())[0]
-                    print(payload)
-                else:
-                    return {
-                        "status": "FAILED",
-                        "message": "are you calling valid endpoint, __results__ missing in params",
-                    }
+            mark_request_as_complete(request_id)
             return payload
         except BaseException as error:
             default_logger.error("Extract error", error)
             return {"error": error}
+
+    @app.post('/api/extract', tags=['text', 'rest-api'])
+    async def text_extract_post(request: Request):
+        request_id = str(uuid.uuid4())
+        default_logger.info(f"Executing text_extract_post : {request_id}")
+        payload = await request.json()
+        asyncio.ensure_future(process_request(request_id, payload))
+
+        return {"request_id": request_id}
 
     @app.get('/api/text/status', tags=['text', 'rest-api'])
     async def text_status():
