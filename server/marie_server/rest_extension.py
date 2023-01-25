@@ -1,8 +1,19 @@
-from typing import TYPE_CHECKING
+import asyncio
+import time
+import uuid
+from functools import partial
+from typing import TYPE_CHECKING, Any
 
-from marie.api import extract_payload, value_from_payload_or_args
+from fastapi import Request
+from marie import Client
+from marie.api import extract_payload
+from marie.api import value_from_payload_or_args
+from marie.logging.predefined import default_logger
 from marie.types.request.data import DataRequest
 from marie.utils.docs import docs_from_file
+from marie.utils.types import strtobool
+
+from marie.messaging import mark_request_as_complete
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi import FastAPI, Request
@@ -31,6 +42,10 @@ def extend_rest_interface(app: 'FastAPI') -> 'FastAPI':
     return app
 
 
+def generate_job_id() -> str:
+    return str(uuid.uuid4())
+
+
 def parse_response_to_payload(resp: DataRequest):
     """
     We get raw response `marie.types.request.data.DataRequest`
@@ -42,7 +57,6 @@ def parse_response_to_payload(resp: DataRequest):
     if "__results__" in resp.parameters:
         results = resp.parameters["__results__"]
         payload = list(results.values())[0]
-        print(payload)
         return payload
 
     return {
@@ -51,8 +65,13 @@ def parse_response_to_payload(resp: DataRequest):
     }
 
 
-async def parse_request_to_docs(request: 'Request'):
-    payload = await request.json()
+async def parse_payload_to_docs(payload: Any):
+    """
+    Parse payload request
+
+    :param payload:
+    :return:
+    """
     # every request should contain queue_id if not present it will default to '0000-0000-0000-0000'
     queue_id = value_from_payload_or_args(
         payload, "queue_id", default="0000-0000-0000-0000"
@@ -70,3 +89,42 @@ async def parse_request_to_docs(request: 'Request'):
         "ref_type": doc_type,
     }
     return parameters, input_docs
+
+
+async def handle_request(request: Request, client: Client, handler: callable):
+    payload = await request.json()
+    job_id = generate_job_id()
+    default_logger.info(f"Executing handle_request : {job_id}")
+    sync = strtobool(value_from_payload_or_args(payload, "sync", default=False))
+
+    task = asyncio.ensure_future(
+        process_request(job_id, payload, partial(handler, client))
+    )
+
+    if sync:
+        response = await asyncio.wait([task])
+        return response
+    return {"jobid": job_id, "status": "ok"}
+
+
+async def process_request(job_id: str, payload: Any, handler: callable):
+    status = "OK"
+    job_tag = ""
+    try:
+        default_logger.info(f"Starting request: {job_id}")
+        parameters, input_docs = await parse_payload_to_docs(payload)
+        job_tag = parameters["ref_type"] if "ref_type" in parameters else ""
+
+        async def run(op, _docs, _param):
+            return await op(_docs, _param)
+
+        payload = await run(handler, input_docs, parameters)
+        return payload
+    except BaseException as error:
+        default_logger.error("processing error", error)
+        status = "ERROR"
+        return {"jobid": job_id, "status": status, "error": error}
+    finally:
+        await mark_request_as_complete(
+            job_id, "extract", job_tag, status, int(time.time())
+        )

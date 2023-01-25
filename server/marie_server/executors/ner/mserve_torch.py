@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from marie import Client
 from marie.logging.predefined import default_logger
 
-from marie_server.rest_extension import parse_request_to_docs, parse_response_to_payload
+from marie_server.rest_extension import parse_response_to_payload, parse_payload_to_docs
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi import FastAPI
@@ -24,7 +24,8 @@ def extend_rest_interface_ner(app: FastAPI) -> None:
     async def text_ner_post(request: Request):
         default_logger.info("Executing text_ner_post")
         try:
-            parameters, input_docs = await parse_request_to_docs(request)
+            payload = await request.json()
+            parameters, input_docs = await parse_payload_to_docs(payload)
             payload = {}
 
             async for resp in c.post(
