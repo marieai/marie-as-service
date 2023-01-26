@@ -44,10 +44,10 @@ executors:
         messaging_enabled : True
         messaging_conf :
           provider: amazon-rabbitmq
-          hostname: b-ff3d0999-a25b-4a5a-9775-e7ba76f8fa3d.mq.us-east-1.amazonaws.com
+          hostname: ${{ ENV.messaging_hostname }}
           port: 5671
-          username: marie-ai
-          password: 0406@BluePumpkin2016
+          username: ${{ ENV.messaging_username }}
+          password: ${{ ENV.messaging_password }}
           tls: True
           virtualhost: /marie-ai
       metas:

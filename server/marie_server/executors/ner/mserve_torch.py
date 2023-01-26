@@ -20,6 +20,7 @@ def extend_rest_interface_ner(app: FastAPI) -> None:
         host='0.0.0.0', port=52000, protocol='grpc', request_size=1, asyncio=True
     )
 
+    @app.post('/api/ner/{queue_id}', tags=['ner', 'rest-api'])
     @app.post('/api/ner', tags=['ner', 'rest-api'])
     async def text_ner_post(request: Request):
         default_logger.info("Executing text_ner_post")
