@@ -114,6 +114,8 @@ async def process_request(job_id: str, payload: Any, handler: callable):
         default_logger.info(f"Starting request: {job_id}")
         parameters, input_docs = await parse_payload_to_docs(payload)
         job_tag = parameters["ref_type"] if "ref_type" in parameters else ""
+        payload["srcBase64"] = None  # THIS IS TEMPORARY HERE
+        parameters["payload"] = payload  # THIS IS TEMPORARY HERE
 
         async def run(op, _docs, _param):
             return await op(_docs, _param)

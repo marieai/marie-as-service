@@ -35,11 +35,24 @@ with:
       tags:
         - ner
 
+shared_config:
+  storage: &storage_conf
+    storage_enabled: True
+    storage_conf:
+      provider: postgresql
+      hostname: 127.0.0.1
+      port: 5432
+      username: postgres
+      password: 123456
+      database: postgres
+      default_table: shared_docs
+
 executors:
+
   - name: extract_t
     uses:
-#      jtype: TextExtractionExecutor
-      jtype: ExtractExecutor
+      jtype: TextExtractionExecutor
+#      jtype: ExtractExecutor
       with:
         messaging_enabled : True
         messaging_conf :
@@ -64,15 +77,8 @@ executors:
 #      jtype: NerExtractionExecutor
 #      with:
 #        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
-#        storage_enabled : True
-#        storage_conf :
-#          provider: postgresql
-#          hostname: 127.0.0.1
-#          port: 5432
-#          username: postgres
-#          password: 123456
-#          database: postgres
-#          default_table: ner_executor
+#        <<: *storage_conf
+#        storage_enabled : False
 #      metas:
 #        py_modules:
 ##          - marie_server.executors.ner.mserve_torch
