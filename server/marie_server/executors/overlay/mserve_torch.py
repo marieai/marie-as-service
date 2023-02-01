@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from marie import Client
 from marie.logging.predefined import default_logger
 from marie_server.rest_extension import (
@@ -12,16 +12,15 @@ from marie_server.rest_extension import (
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi import FastAPI
 
+overlay_flow_is_ready = False
 
-def extend_rest_interface_overlay(app: FastAPI) -> None:
+
+def extend_rest_interface_overlay(app: FastAPI, client: Client) -> None:
     """
     Extends HTTP Rest endpoint to provide compatibility with existing REST endpoints
     :param app:
     :return:
     """
-    c = Client(
-        host='0.0.0.0', port=52000, protocol='grpc', request_size=1, asyncio=True
-    )
 
     @app.post('/api/overlayXXXS', tags=['overlay', 'rest-api'])
     async def overlay_postXXX(request: Request):
@@ -31,7 +30,7 @@ def extend_rest_interface_overlay(app: FastAPI) -> None:
             parameters, input_docs = await parse_payload_to_docs(payload)
             payload = {}
 
-            async for resp in c.post(
+            async for resp in client.post(
                 '/overlay/segment',
                 input_docs,
                 request_size=-1,
@@ -65,7 +64,14 @@ def extend_rest_interface_overlay(app: FastAPI) -> None:
         :param request:
         :return:
         """
-        return await handle_request(request, c, __process)
+
+        global overlay_flow_is_ready
+        print(f"{overlay_flow_is_ready=}")
+        if not overlay_flow_is_ready and not await client.is_flow_ready():
+            raise HTTPException(status_code=503, detail="Flow is not yet ready")
+        overlay_flow_is_ready = True
+
+        return await handle_request(request, client, __process)
 
     @app.get('/api/overlay/status', tags=['overlay', 'rest-api'])
     async def overlay_status():

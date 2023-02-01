@@ -49,28 +49,28 @@ shared_config:
 
 executors:
 
-  - name: extract_t
-    uses:
-#      jtype: TextExtractionExecutor
-      jtype: ExtractExecutor
-      with:
-        messaging_enabled : True
-        messaging_conf :
-          provider: amazon-rabbitmq
-          hostname: ${{ ENV.messaging_hostname }}
-          port: 5671
-          username: ${{ ENV.messaging_username }}
-          password: ${{ ENV.messaging_password }}
-          tls: True
-          virtualhost: /marie-ai
-      metas:
-        py_modules:
-#          - marie_server.executors.extract.mserve_torch
-          - marie.executor.text
-    timeout_ready: 3000000
-    replicas: ${{ CONTEXT.gpu_device_count }}
-    env :
-      CUDA_VISIBLE_DEVICES: RR
+#  - name: extract_t
+#    uses:
+##      jtype: TextExtractionExecutor
+#      jtype: ExtractExecutor
+#      with:
+#        messaging_enabled : True
+#        messaging_conf :
+#          provider: amazon-rabbitmq
+#          hostname: ${{ ENV.messaging_hostname }}
+#          port: 5671
+#          username: ${{ ENV.messaging_username }}
+#          password: ${{ ENV.messaging_password }}
+#          tls: True
+#          virtualhost: /marie-ai
+#      metas:
+#        py_modules:
+##          - marie_server.executors.extract.mserve_torch
+#          - marie.executor.text
+#    timeout_ready: 3000000
+#    replicas: ${{ CONTEXT.gpu_device_count }}
+#    env :
+#      CUDA_VISIBLE_DEVICES: RR
 
   - name: ner_t
     uses:

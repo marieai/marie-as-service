@@ -10,15 +10,13 @@ if TYPE_CHECKING:  # pragma: no cover
     from fastapi import FastAPI
 
 
-def extend_rest_interface_ner(app: FastAPI) -> None:
+def extend_rest_interface_ner(app: FastAPI, client: Client) -> None:
     """
     Extends HTTP Rest endpoint to provide compatibility with existing REST endpoints
+    :param client:
     :param app:
     :return:
     """
-    c = Client(
-        host='0.0.0.0', port=52000, protocol='grpc', request_size=1, asyncio=True
-    )
 
     @app.post('/api/ner/{queue_id}', tags=['ner', 'rest-api'])
     @app.post('/api/ner', tags=['ner', 'rest-api'])
@@ -29,7 +27,7 @@ def extend_rest_interface_ner(app: FastAPI) -> None:
             parameters, input_docs = await parse_payload_to_docs(payload)
             payload = {}
 
-            async for resp in c.post(
+            async for resp in client.post(
                 '/ner/extract',
                 input_docs,
                 request_size=-1,

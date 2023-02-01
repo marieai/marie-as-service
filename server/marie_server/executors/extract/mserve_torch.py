@@ -1,26 +1,25 @@
 import asyncio
 import uuid
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from marie import Client, DocumentArray
 from marie import Document
 from marie.logging.predefined import default_logger
-
 from marie_server.rest_extension import (
     parse_response_to_payload,
     handle_request,
 )
 
+extract_flow_is_ready = False
 
-def extend_rest_interface_extract(app: FastAPI) -> None:
+
+def extend_rest_interface_extract(app: FastAPI, client: Client) -> None:
     """
     Extends HTTP Rest endpoint to provide compatibility with existing REST endpoints
+    :param client:
     :param app:
     :return:
     """
-    c = Client(
-        host='0.0.0.0', port=52000, protocol='grpc', request_size=1, asyncio=True
-    )
 
     @app.post('/api/text/extract-test', tags=['text', 'rest-api'])
     async def text_extract_post_test(request: Request):
@@ -41,7 +40,7 @@ def extend_rest_interface_extract(app: FastAPI) -> None:
         print(">> ")
         outputs = DocumentArray()
         out_text = []
-        async for resp in c.post('/text/extract', async_inputs, request_size=1):
+        async for resp in client.post('/text/extract', async_inputs, request_size=1):
             print('--' * 100)
             print(resp)
             print(resp.texts)
@@ -75,7 +74,11 @@ def extend_rest_interface_extract(app: FastAPI) -> None:
         :param request:
         :return:
         """
-        return await handle_request(request, c, __process)
+        global extract_flow_is_ready
+        if not extract_flow_is_ready and not await client.is_flow_ready():
+            raise HTTPException(status_code=503, detail="Flow is not yet ready")
+        extract_flow_is_ready = True
+        return await handle_request(request, client, __process)
 
     @app.get('/api/text/status', tags=['text', 'rest-api'])
     async def text_status():

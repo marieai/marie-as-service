@@ -35,9 +35,13 @@ def extend_rest_interface(app: 'FastAPI') -> 'FastAPI':
         extend_rest_interface_overlay,
     )
 
-    extend_rest_interface_extract(app)
-    extend_rest_interface_ner(app)
-    extend_rest_interface_overlay(app)
+    client = Client(
+        host='0.0.0.0', port=52000, protocol='grpc', request_size=1, asyncio=True
+    )
+
+    extend_rest_interface_extract(app, client)
+    extend_rest_interface_ner(app, client)
+    extend_rest_interface_overlay(app, client)
 
     return app
 
@@ -100,10 +104,11 @@ async def handle_request(request: Request, client: Client, handler: callable):
     task = asyncio.ensure_future(
         process_request(job_id, payload, partial(handler, client))
     )
-
+    # run the task synchronously
     if sync:
-        response = await asyncio.wait([task])
-        return response
+        results = await asyncio.gather(task)
+        return results[0]
+
     return {"jobid": job_id, "status": "ok"}
 
 
