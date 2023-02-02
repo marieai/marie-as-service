@@ -78,7 +78,7 @@ def extend_rest_interface_extract(app: FastAPI, client: Client) -> None:
         if not extract_flow_is_ready and not await client.is_flow_ready():
             raise HTTPException(status_code=503, detail="Flow is not yet ready")
         extract_flow_is_ready = True
-        return await handle_request(request, client, __process)
+        return await handle_request("extract", request, client, __process)
 
     @app.get('/api/text/status', tags=['text', 'rest-api'])
     async def text_status():

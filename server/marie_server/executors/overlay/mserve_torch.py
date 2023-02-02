@@ -71,7 +71,7 @@ def extend_rest_interface_overlay(app: FastAPI, client: Client) -> None:
             raise HTTPException(status_code=503, detail="Flow is not yet ready")
         overlay_flow_is_ready = True
 
-        return await handle_request(request, client, __process)
+        return await handle_request("overlay", request, client, __process)
 
     @app.get('/api/overlay/status', tags=['overlay', 'rest-api'])
     async def overlay_status():

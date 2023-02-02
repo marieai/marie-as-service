@@ -47,30 +47,41 @@ shared_config:
       database: postgres
       default_table: shared_docs
 
-executors:
+  message: &message_conf
+    messaging_enabled : True
+    messaging_conf :
+      provider: amazon-rabbitmq
+      hostname: b-ff3d0999-a25b-4a5a-9775-e7ba76f8fa3d.mq.us-east-1.amazonaws.com
+      port: 5671
+      username:
+      password:
+      tls: True
+      virtualhost: /marie-ai
 
-  - name: extract_t
-    uses:
-      jtype: TextExtractionExecutor
-#      jtype: ExtractExecutor
-      with:
-        messaging_enabled : True
-        messaging_conf :
-          provider: amazon-rabbitmq
-          hostname: b-ff3d0999-a25b-4a5a-9775-e7ba76f8fa3d.mq.us-east-1.amazonaws.com
-          port: 5671
-          username: marie-ai
-          password: 0406@BluePumpkin2016
-          tls: True
-          virtualhost: /marie-ai
-      metas:
-        py_modules:
-#          - marie_server.executors.extract.mserve_torch
-          - marie.executor.text
-    timeout_ready: 3000000
-    replicas: ${{ CONTEXT.gpu_device_count }}
-    env :
-      CUDA_VISIBLE_DEVICES: RR
+executors:
+#
+#  - name: extract_t
+#    uses:
+#      jtype: TextExtractionExecutor
+##      jtype: ExtractExecutor
+#      with:
+#        messaging_enabled : True
+#        messaging_conf :
+#          provider: amazon-rabbitmq
+#          hostname: b-ff3d0999-a25b-4a5a-9775-e7ba76f8fa3d.mq.us-east-1.amazonaws.com
+#          port: 5671
+#          username: 
+#          password:
+#          tls: True
+#          virtualhost: /marie-ai
+#      metas:
+#        py_modules:
+##          - marie_server.executors.extract.mserve_torch
+#          - marie.executor.text
+#    timeout_ready: 3000000
+#    replicas: ${{ CONTEXT.gpu_device_count }}
+#    env :
+#      CUDA_VISIBLE_DEVICES: RR
 
 #  - name: ner_t
 #    uses:
@@ -89,26 +100,17 @@ executors:
 #    env :
 #      CUDA_VISIBLE_DEVICES: RR
 
-#  - name: overlay_tls
-#    uses:
-#      jtype: OverlayExecutor
-#      with:
-#        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
-#        storage_enabled : True
-#        storage_conf :
-#          provider: postgresql
-#          hostname: 127.0.0.1
-#          port: 5432
-#          username: postgres
-#          password: 123456
-#          database: postgres
-#          default_table: overlay_executor
-#      metas:
-#        py_modules:
-##          - marie_server.executors.ner.mserve_torch
-#          - marie.executor.overlay
-#    timeout_ready: 3000000
-#    replicas: 1
-
-
-#    --discovery --discovery-host 127.0.0.1 --discovery-port 8500 --host 192.168.102.65 --port 5555
+  - name: overlay_tls
+    uses:
+      jtype: OverlayExecutor
+      with:
+        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
+        <<: *storage_conf
+        storage_enabled : True
+        <<: *message_conf
+        messaging_enabled: True
+      metas:
+        py_modules:
+          - marie.executor.overlay
+    timeout_ready: 3000000
+    replicas: 1

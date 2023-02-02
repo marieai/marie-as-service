@@ -2,7 +2,7 @@ import asyncio
 import time
 import uuid
 from functools import partial
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from fastapi import Request
 from marie import Client
@@ -69,11 +69,12 @@ def parse_response_to_payload(resp: DataRequest):
     }
 
 
-async def parse_payload_to_docs(payload: Any):
+async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = True):
     """
     Parse payload request
 
     :param payload:
+    :param clear_payload:
     :return:
     """
     # every request should contain queue_id if not present it will default to '0000-0000-0000-0000'
@@ -82,7 +83,19 @@ async def parse_payload_to_docs(payload: Any):
     )
     tmp_file, checksum, file_type = extract_payload(payload, queue_id)
     input_docs = docs_from_file(tmp_file)
-    payload["data"] = None
+
+    if clear_payload:
+        key = "data"
+        if "data" in payload:
+            key = "data"
+        elif "srcData" in payload:
+            key = "srcData"
+        elif "srcBase64" in payload:
+            key = "srcBase64"
+        elif "srcFile" in payload:
+            key = "srcFile"
+
+        payload[key] = None
 
     doc_id = value_from_payload_or_args(payload, "doc_id", default=checksum)
     doc_type = value_from_payload_or_args(payload, "doc_type", default="")
@@ -95,14 +108,16 @@ async def parse_payload_to_docs(payload: Any):
     return parameters, input_docs
 
 
-async def handle_request(request: Request, client: Client, handler: callable):
+async def handle_request(
+    api_tag: str, request: Request, client: Client, handler: callable
+):
     payload = await request.json()
     job_id = generate_job_id()
-    default_logger.info(f"Executing handle_request : {job_id}")
+    default_logger.info(f"handle_request[{api_tag}] : {job_id}")
     sync = strtobool(value_from_payload_or_args(payload, "sync", default=False))
 
     task = asyncio.ensure_future(
-        process_request(job_id, payload, partial(handler, client))
+        process_request(api_tag, job_id, payload, partial(handler, client))
     )
     # run the task synchronously
     if sync:
@@ -112,14 +127,13 @@ async def handle_request(request: Request, client: Client, handler: callable):
     return {"jobid": job_id, "status": "ok"}
 
 
-async def process_request(job_id: str, payload: Any, handler: callable):
+async def process_request(api_tag: str, job_id: str, payload: Any, handler: callable):
     status = "OK"
     job_tag = ""
     try:
         default_logger.info(f"Starting request: {job_id}")
         parameters, input_docs = await parse_payload_to_docs(payload)
         job_tag = parameters["ref_type"] if "ref_type" in parameters else ""
-        payload["srcBase64"] = None  # THIS IS TEMPORARY HERE
         parameters["payload"] = payload  # THIS IS TEMPORARY HERE
 
         async def run(op, _docs, _param):
@@ -133,5 +147,5 @@ async def process_request(job_id: str, payload: Any, handler: callable):
         return {"jobid": job_id, "status": status, "error": error}
     finally:
         await mark_request_as_complete(
-            job_id, "extract", job_tag, status, int(time.time())
+            job_id, api_tag, job_tag, status, int(time.time())
         )
