@@ -77,11 +77,14 @@ async def parse_payload_to_docs(payload: Any):
         payload, "queue_id", default="0000-0000-0000-0000"
     )
     tmp_file, checksum, file_type = extract_payload(payload, queue_id)
-    pages_parameter = value_from_payload_or_args(payload, "pages", default="")
     pages = []
 
-    if len(pages_parameter) > 0:
-        pages = [int(page) for page in pages_parameter.split(',')]
+    try:
+        pages_parameter = value_from_payload_or_args(payload, "pages", default="")
+        if len(pages_parameter) > 0:
+            pages = [int(page) for page in pages_parameter.split(',')]
+    except:
+        pass
 
     input_docs = docs_from_file_specific(tmp_file, pages)
     payload["data"] = None
