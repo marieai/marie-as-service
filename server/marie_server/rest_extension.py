@@ -96,6 +96,7 @@ async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = Tr
             key = "srcFile"
 
         payload[key] = None
+
     pages_parameter = value_from_payload_or_args(payload, "pages", default="")
     pages = []
 
