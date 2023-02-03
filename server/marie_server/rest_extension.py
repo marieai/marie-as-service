@@ -10,7 +10,7 @@ from marie.api import extract_payload
 from marie.api import value_from_payload_or_args
 from marie.logging.predefined import default_logger
 from marie.types.request.data import DataRequest
-from marie.utils.docs import (docs_from_file, docs_from_file_specific)
+from marie.utils.docs import docs_from_file, docs_from_file_specific
 from marie.utils.types import strtobool
 
 from marie.messaging import (
@@ -96,7 +96,7 @@ async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = Tr
         pass
 
     input_docs = docs_from_file_specific(tmp_file, pages)
-    #input_docs = docs_from_file(tmp_file)
+    # input_docs = docs_from_file(tmp_file)
 
     if clear_payload:
         key = "data"
@@ -109,7 +109,7 @@ async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = Tr
         elif "srcFile" in payload:
             key = "srcFile"
 
-        payload[key] = None
+        del payload[key]
 
     doc_id = value_from_payload_or_args(payload, "doc_id", default=checksum)
     doc_type = value_from_payload_or_args(payload, "doc_type", default="")
