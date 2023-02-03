@@ -107,19 +107,6 @@ async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = Tr
 
         payload[key] = None
 
-    pages_parameter = value_from_payload_or_args(payload, "pages", default="")
-    pages = []
-
-    try:
-        pages_parameter = value_from_payload_or_args(payload, "pages", default="")
-        if len(pages_parameter) > 0:
-            pages = [int(page) for page in pages_parameter.split(',')]
-    except:
-        pass
-
-    input_docs = docs_from_file_specific(tmp_file, pages)
-    payload["data"] = None
-
     doc_id = value_from_payload_or_args(payload, "doc_id", default=checksum)
     doc_type = value_from_payload_or_args(payload, "doc_type", default="")
 
