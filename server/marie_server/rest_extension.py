@@ -107,8 +107,6 @@ async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = Tr
 
         payload[key] = None
 
-    payload["data"] = None
-
     doc_id = value_from_payload_or_args(payload, "doc_id", default=checksum)
     doc_type = value_from_payload_or_args(payload, "doc_type", default="")
 
