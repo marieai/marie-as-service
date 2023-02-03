@@ -13,7 +13,11 @@ from marie.types.request.data import DataRequest
 from marie.utils.docs import docs_from_file
 from marie.utils.types import strtobool
 
-from marie.messaging import mark_request_as_complete
+from marie.messaging import (
+    mark_request_as_complete,
+    mark_request_as_started,
+    mark_request_as_failed,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi import FastAPI, Request
@@ -130,22 +134,33 @@ async def handle_request(
 async def process_request(api_tag: str, job_id: str, payload: Any, handler: callable):
     status = "OK"
     job_tag = ""
+    results = None
     try:
         default_logger.info(f"Starting request: {job_id}")
         parameters, input_docs = await parse_payload_to_docs(payload)
         job_tag = parameters["ref_type"] if "ref_type" in parameters else ""
         parameters["payload"] = payload  # THIS IS TEMPORARY HERE
 
+        # payload data attribute should be stripped at this time
+        await mark_request_as_started(
+            job_id, api_tag, job_tag, status, int(time.time()), payload
+        )
+
         async def run(op, _docs, _param):
             return await op(_docs, _param)
 
-        payload = await run(handler, input_docs, parameters)
-        return payload
+        results = await run(handler, input_docs, parameters)
+        return results
     except BaseException as error:
         default_logger.error("processing error", error)
         status = "ERROR"
+
+        await mark_request_as_failed(
+            job_id, api_tag, job_tag, status, int(time.time(), error)
+        )
+
         return {"jobid": job_id, "status": status, "error": error}
     finally:
         await mark_request_as_complete(
-            job_id, api_tag, job_tag, status, int(time.time())
+            job_id, api_tag, job_tag, status, int(time.time()), results
         )

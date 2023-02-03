@@ -22,29 +22,6 @@ def extend_rest_interface_overlay(app: FastAPI, client: Client) -> None:
     :return:
     """
 
-    @app.post('/api/overlayXXXS', tags=['overlay', 'rest-api'])
-    async def overlay_postXXX(request: Request):
-        default_logger.info("Executing overlay_post")
-        try:
-            payload = await request.json()
-            parameters, input_docs = await parse_payload_to_docs(payload)
-            payload = {}
-
-            async for resp in client.post(
-                '/overlay/segment',
-                input_docs,
-                request_size=-1,
-                parameters=parameters,
-                return_responses=True,
-            ):
-                print(type(resp))
-                payload = parse_response_to_payload(resp)
-
-            return payload
-        except BaseException as error:
-            default_logger.error("Extract error", error)
-            return {"error": error}
-
     async def __process(client: Client, input_docs, parameters):
         payload = {}
         async for resp in client.post(
@@ -64,7 +41,6 @@ def extend_rest_interface_overlay(app: FastAPI, client: Client) -> None:
         :param request:
         :return:
         """
-
         global overlay_flow_is_ready
         print(f"{overlay_flow_is_ready=}")
         if not overlay_flow_is_ready and not await client.is_flow_ready():

@@ -26,10 +26,10 @@ shared_config:
 with:
   port:
     - 51000
-#    - 52000
+    - 52000
   protocol:
     - http
-#    - grpc
+    - grpc
   discovery: True
   discovery_host: 127.0.0.1
   discovery_port: 8500
@@ -63,7 +63,7 @@ with:
 
 
 executors:
-#
+
 #  - name: extract_t
 #    uses:
 #      jtype: TextExtractionExecutor
@@ -74,8 +74,8 @@ executors:
 #          provider: amazon-rabbitmq
 #          hostname: b-ff3d0999-a25b-4a5a-9775-e7ba76f8fa3d.mq.us-east-1.amazonaws.com
 #          port: 5671
-#          username: 
-#          password:
+#          username: A
+#          password: V
 #          tls: True
 #          virtualhost: /marie-ai
 #      metas:
