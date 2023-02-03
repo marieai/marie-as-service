@@ -92,7 +92,7 @@ async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = Tr
         pass
 
     input_docs = docs_from_file_specific(tmp_file, pages)
-    input_docs = docs_from_file(tmp_file)
+    #input_docs = docs_from_file(tmp_file)
 
     if clear_payload:
         key = "data"
