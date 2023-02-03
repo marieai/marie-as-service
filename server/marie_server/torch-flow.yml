@@ -1,15 +1,40 @@
 jtype: Flow
 version: '1'
+shared_config:
+  storage: &storage_conf
+    storage_enabled: True
+    storage_conf:
+      provider: postgresql
+      hostname: 127.0.0.1
+      port: 5432
+      username: postgres
+      password: 123456
+      database: postgres
+      default_table: shared_docs
+
+  message: &message_conf
+    messaging_enabled : True
+    messaging_conf :
+      provider: amazon-rabbitmq
+      hostname: ${{ ENV.messaging_hostname }}
+      port: 5671
+      username: ${{ ENV.messaging_username }}
+      password: ${{ ENV.messaging_password }}
+      tls: True
+      virtualhost: /marie-ai
+
 with:
   port:
     - 51000
-    - 52000
+#    - 52000
   protocol:
     - http
-    - grpc
+#    - grpc
   discovery: True
   discovery_host: 127.0.0.1
   discovery_port: 8500
+
+  event_tracking: True
 
   expose_endpoints:
     /extract:
@@ -35,28 +60,7 @@ with:
       tags:
         - ner
 
-shared_config:
-  storage: &storage_conf
-    storage_enabled: True
-    storage_conf:
-      provider: postgresql
-      hostname: 127.0.0.1
-      port: 5432
-      username: postgres
-      password: 123456
-      database: postgres
-      default_table: shared_docs
 
-  message: &message_conf
-    messaging_enabled : True
-    messaging_conf :
-      provider: amazon-rabbitmq
-      hostname: b-ff3d0999-a25b-4a5a-9775-e7ba76f8fa3d.mq.us-east-1.amazonaws.com
-      port: 5671
-      username:
-      password:
-      tls: True
-      virtualhost: /marie-ai
 
 executors:
 #
@@ -100,17 +104,16 @@ executors:
 #    env :
 #      CUDA_VISIBLE_DEVICES: RR
 
-  - name: overlay_tls
+  - name: overlay_t
     uses:
       jtype: OverlayExecutor
       with:
-        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
+        model_name_or_path : 'rms/holder'
         <<: *storage_conf
         storage_enabled : True
-        <<: *message_conf
-        messaging_enabled: True
       metas:
         py_modules:
           - marie.executor.overlay
     timeout_ready: 3000000
     replicas: 1
+
