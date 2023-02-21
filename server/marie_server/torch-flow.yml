@@ -1,5 +1,7 @@
 jtype: Flow
 version: '1'
+
+# Shared configuration
 shared_config:
   storage: &storage_conf
     storage_enabled: True
@@ -22,6 +24,13 @@ shared_config:
       password: ${{ ENV.messaging_password }}
       tls: True
       virtualhost: /marie-ai
+
+
+#
+
+
+
+# Executor configuration
 
 with:
   port:
@@ -87,33 +96,33 @@ executors:
 #    env :
 #      CUDA_VISIBLE_DEVICES: RR
 
-#  - name: ner_t
-#    uses:
-#      jtype: NerExtractionExecutor
-#      with:
-#        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
-#        <<: *storage_conf
-#        storage_enabled : False
-#      metas:
-#        py_modules:
-##          - marie_server.executors.ner.mserve_torch
-#          - marie.executor.ner
-#    timeout_ready: 3000000
-##    replicas: 1
-#    replicas: ${{ CONTEXT.gpu_device_count }}
-#    env :
-#      CUDA_VISIBLE_DEVICES: RR
-
-  - name: overlay_t
+  - name: ner_t
     uses:
-      jtype: OverlayExecutor
+      jtype: NerExtractionExecutor
       with:
-        model_name_or_path : 'rms/holder'
+        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
         <<: *storage_conf
-        storage_enabled : True
+        storage_enabled : False
       metas:
         py_modules:
-          - marie.executor.overlay
+#          - marie_server.executors.ner.mserve_torch
+          - marie.executor.ner
     timeout_ready: 3000000
-    replicas: 1
-
+#    replicas: 1
+    replicas: ${{ CONTEXT.gpu_device_count }}
+    env :
+      CUDA_VISIBLE_DEVICES: RR
+#
+#  - name: overlay_t
+#    uses:
+#      jtype: OverlayExecutor
+#      with:
+#        model_name_or_path : 'rms/holder'
+#        <<: *storage_conf
+#        storage_enabled : True
+#      metas:
+#        py_modules:
+#          - marie.executor.overlay
+#    timeout_ready: 3000000
+#    replicas: 1
+#

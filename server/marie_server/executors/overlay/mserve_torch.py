@@ -18,6 +18,7 @@ overlay_flow_is_ready = False
 def extend_rest_interface_overlay(app: FastAPI, client: Client) -> None:
     """
     Extends HTTP Rest endpoint to provide compatibility with existing REST endpoints
+    :param client:
     :param app:
     :return:
     """
@@ -25,7 +26,7 @@ def extend_rest_interface_overlay(app: FastAPI, client: Client) -> None:
     async def __process(client: Client, input_docs, parameters):
         payload = {}
         async for resp in client.post(
-            '/overlay/segment',
+            "/overlay/segment",
             input_docs,
             request_size=-1,
             parameters=parameters,
@@ -34,7 +35,7 @@ def extend_rest_interface_overlay(app: FastAPI, client: Client) -> None:
             payload = parse_response_to_payload(resp)
         return payload
 
-    @app.post('/api/overlay', tags=['overlay', 'rest-api'])
+    @app.post("/api/overlay", tags=["overlay", "rest-api"])
     async def overlay_post(request: Request):
         """
         Handle API Overlay endpoint
@@ -49,7 +50,7 @@ def extend_rest_interface_overlay(app: FastAPI, client: Client) -> None:
 
         return await handle_request("overlay", request, client, __process)
 
-    @app.get('/api/overlay/status', tags=['overlay', 'rest-api'])
+    @app.get("/api/overlay/status", tags=["overlay", "rest-api"])
     async def overlay_status():
         default_logger.info("Executing overlay_status")
 

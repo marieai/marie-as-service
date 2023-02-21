@@ -14,16 +14,16 @@ from marie.utils.docs import docs_from_file, docs_from_file_specific
 from marie.utils.types import strtobool
 
 from marie.messaging import (
-    mark_request_as_complete,
-    mark_request_as_started,
-    mark_request_as_failed,
+    mark_as_complete,
+    mark_as_started,
+    mark_as_failed,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
     from fastapi import FastAPI, Request
 
 
-def extend_rest_interface(app: 'FastAPI') -> 'FastAPI':
+def extend_rest_interface(app: "FastAPI") -> "FastAPI":
     """Register executors REST endpoints that do not depend on DocumentArray
     :param app:
     :return:
@@ -40,7 +40,7 @@ def extend_rest_interface(app: 'FastAPI') -> 'FastAPI':
     )
 
     client = Client(
-        host='0.0.0.0', port=52000, protocol='grpc', request_size=1, asyncio=True
+        host="0.0.0.0", port=52000, protocol="grpc", request_size=1, asyncio=True
     )
 
     extend_rest_interface_extract(app, client)
@@ -75,7 +75,7 @@ def parse_response_to_payload(resp: DataRequest):
 
 async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = True):
     """
-    Parse payload request
+    Parse payload request, extract file and return list of Document objects
 
     :param payload:
     :param clear_payload:
@@ -91,7 +91,7 @@ async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = Tr
     try:
         pages_parameter = value_from_payload_or_args(payload, "pages", default="")
         if len(pages_parameter) > 0:
-            pages = [int(page) for page in pages_parameter.split(',')]
+            pages = [int(page) for page in pages_parameter.split(",")]
     except:
         pass
 
@@ -152,7 +152,7 @@ async def process_request(api_tag: str, job_id: str, payload: Any, handler: call
         parameters["payload"] = payload  # THIS IS TEMPORARY HERE
 
         # payload data attribute should be stripped at this time
-        await mark_request_as_started(
+        await mark_as_started(
             job_id, api_tag, job_tag, status, int(time.time()), payload
         )
 
@@ -165,12 +165,10 @@ async def process_request(api_tag: str, job_id: str, payload: Any, handler: call
         default_logger.error("processing error", error)
         status = "ERROR"
 
-        await mark_request_as_failed(
-            job_id, api_tag, job_tag, status, int(time.time(), error)
-        )
+        await mark_as_failed(job_id, api_tag, job_tag, status, int(time.time()), error)
 
         return {"jobid": job_id, "status": status, "error": error}
     finally:
-        await mark_request_as_complete(
+        await mark_as_complete(
             job_id, api_tag, job_tag, status, int(time.time()), results
         )
