@@ -3,9 +3,8 @@ version: '1'
 
 # Shared configuration
 shared_config:
-  storage: &storage_conf
-    storage_enabled: True
-    storage_conf: &storage
+  storage: &storage
+    psql: &psql_conf_shared
       provider: postgresql
       hostname: 127.0.0.1
       port: 5432
@@ -14,9 +13,8 @@ shared_config:
       database: postgres
       default_table: shared_docs
 
-  message: &message_conf
-    messaging_enabled : True
-    messaging_conf :  &message
+  message: &message
+    amazon_mq :  &amazon_mq_conf_shared
       provider: amazon-rabbitmq
       hostname: ${{ ENV.messaging_hostname }}
       port: 5671
@@ -95,7 +93,7 @@ executors:
       jtype: NerExtractionExecutor
       with:
         model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
-        <<: *storage_conf
+        <<: *psql_conf_shared
         storage_enabled : False
       metas:
         py_modules:
@@ -130,14 +128,12 @@ toast:
     enabled: True
     path: /tmp/marie/events.json
   amazon-mq:
-    <<: *message_conf
+    <<: *amazon_mq_conf_shared
     enabled : True
-
   psql:
+    <<: *psql_conf_shared
+    default_table: event_tracking
     enabled : True
-    storage_config:
-      <<: *storage
-      default_table: event_tracking
 
 # Document Storage
 # The storage service is used to store the data that is being processed
@@ -170,7 +166,6 @@ storage:
 
   # postgresql configuration. Will be used only if value of backend is "psql"
   psql:
-    enabled : True
-    storage_config:
-      <<: *storage
-#      default_table: event_tracking
+    <<: *psql_conf_shared
+    default_table: store_metadata
+    enabled : False

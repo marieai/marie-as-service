@@ -1,9 +1,10 @@
 import inspect
 import os
 import sys
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import marie.helper
+from dotenv.main import StrPath
 from marie.conf.helper import load_yaml
 from marie.messaging import (
     Toast,
@@ -37,14 +38,24 @@ def setup_toast_events(toast_config: Dict[str, Any]):
 
 def setup_storage(storage_config: Dict[str, Any]):
     """Setup the storage handler"""
-    print(storage_config)
-
     if "s3" in storage_config:
         handler = S3StorageHandler(config=storage_config["s3"], prefix="S3_")
 
         # export AWS_ACCESS_KEY_ID=MARIEACCESSKEY; export AWS_SECRET_ACCESS_KEY=MARIESECRETACCESSKEY;  aws s3 ls --endpoint-url http://localhost:8000
         StorageManager.register_handler(handler=handler)
         StorageManager.ensure_connection("s3://")
+
+
+#
+def load_env_file(dotenv_path: Optional[StrPath] = None) -> None:
+    """
+    Load environment variables from a .env file.
+    :param dotenv_path:
+    :return:
+    """
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
 
 if __name__ == "__main__":
@@ -76,6 +87,7 @@ if __name__ == "__main__":
     print(f"_input = {_input}")
     print(f"CONTEXT.gpu_device_count = {gpu_device_count()}")
 
+    load_env_file()
     # Load the config file and setup the toast events
     config = load_yaml(
         _input,
