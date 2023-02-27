@@ -16,10 +16,10 @@ shared_config:
   message: &message
     amazon_mq :  &amazon_mq_conf_shared
       provider: amazon-rabbitmq
-      hostname: ${{ ENV.messaging_hostname }}
+      hostname: ${{ ENV.AWS_MQ_HOSTNAME }}
       port: 5671
-      username: ${{ ENV.messaging_username }}
-      password: ${{ ENV.messaging_password }}
+      username: ${{ ENV.AWS_MQ_USERNAME }}
+      password: ${{ ENV.AWS_MQ_PASSWORD }}
       tls: True
       virtualhost: /marie-ai
 
@@ -64,47 +64,34 @@ with:
         - ner
 
 executors:
-
-#  - name: extract_t
-#    uses:
-#      jtype: TextExtractionExecutor
-##      jtype: ExtractExecutor
-#      with:
-#        messaging_enabled : True
-#        messaging_conf :
-#          provider: amazon-rabbitmq
-#          hostname: b-ff3d0999-a25b-4a5a-9775-e7ba76f8fa3d.mq.us-east-1.amazonaws.com
-#          port: 5671
-#          username: A
-#          password: V
-#          tls: True
-#          virtualhost: /marie-ai
-#      metas:
-#        py_modules:
-##          - marie_server.executors.extract.mserve_torch
-#          - marie.executor.text
-#    timeout_ready: 3000000
-#    replicas: ${{ CONTEXT.gpu_device_count }}
-#    env :
-#      CUDA_VISIBLE_DEVICES: RR
-
-  - name: ner_t
+  - name: extract_t
     uses:
-      jtype: NerExtractionExecutor
-      with:
-        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
-        <<: *psql_conf_shared
-        storage_enabled : False
+      jtype: TextExtractionExecutor
       metas:
         py_modules:
-#          - marie_server.executors.ner.mserve_torch
-          - marie.executor.ner
+          - marie.executor.text
     timeout_ready: 3000000
-#    replicas: 1
     replicas: ${{ CONTEXT.gpu_device_count }}
     env :
       CUDA_VISIBLE_DEVICES: RR
-#
+
+#  - name: ner_t
+#    uses:
+#      jtype: NerExtractionExecutor
+#      with:
+#        model_name_or_path : 'rms/layoutlmv3-large-corr-ner'
+#        <<: *psql_conf_shared
+#        storage_enabled : False
+#      metas:
+#        py_modules:
+##          - marie_server.executors.ner.mserve_torch
+#          - marie.executor.ner
+#    timeout_ready: 3000000
+##    replicas: 1
+#    replicas: ${{ CONTEXT.gpu_device_count }}
+#    env :
+#      CUDA_VISIBLE_DEVICES: RR
+##
 #  - name: overlay_t
 #    uses:
 #      jtype: OverlayExecutor

@@ -102,7 +102,6 @@ if __name__ == "__main__":
     setup_toast_events(config.get("toast", {}))
     setup_storage(config.get("storage", {}))
 
-    os.exit()
     f = Flow.load_config(
         # _input,
         config,
