@@ -37,7 +37,7 @@ def extend_rest_interface_ner(app: FastAPI, client: Client) -> None:
                 payload = parse_response_to_payload(resp)
             return payload
         except BaseException as error:
-            default_logger.error("Extract error", error)
+            default_logger.error("Extract error", exc_info=0)
             return {"error": error}
 
     @app.get('/api/ner/status', tags=['ner', 'rest-api'])

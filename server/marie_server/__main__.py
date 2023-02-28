@@ -2,9 +2,9 @@ import inspect
 import os
 import sys
 from typing import Dict, Any, Optional
+from rich.traceback import install
 
 import marie.helper
-from dotenv.main import StrPath
 from marie.conf.helper import load_yaml
 from marie.messaging import (
     Toast,
@@ -46,19 +46,15 @@ def setup_storage(storage_config: Dict[str, Any]):
         StorageManager.ensure_connection("s3://")
 
 
-#
-def load_env_file(dotenv_path: Optional[StrPath] = None) -> None:
-    """
-    Load environment variables from a .env file.
-    :param dotenv_path:
-    :return:
-    """
+def load_env_file(dotenv_path: Optional[str] = None) -> None:
     from dotenv import load_dotenv
 
-    load_dotenv()
+    load_dotenv(dotenv_path=dotenv_path, verbose=True)
 
 
 if __name__ == "__main__":
+    install(show_locals=True)
+
     if "NO_VERSION_CHECK" not in os.environ:
         from marie_server.helper import is_latest_version
 
@@ -88,16 +84,12 @@ if __name__ == "__main__":
     print(f"CONTEXT.gpu_device_count = {gpu_device_count()}")
 
     load_env_file()
-    # Load the config file and setup the toast events
-    config = load_yaml(
-        _input,
-        substitute=True,
-        context={
-            "gpu_device_count": gpu_device_count(),
-        },
-    )
+    context = {
+        "gpu_device_count": gpu_device_count(),
+    }
 
-    print(config)
+    # Load the config file and setup the toast events
+    config = load_yaml(_input, substitute=True, context=context)
 
     setup_toast_events(config.get("toast", {}))
     setup_storage(config.get("storage", {}))
@@ -107,9 +99,7 @@ if __name__ == "__main__":
         config,
         extra_search_paths=[os.path.dirname(inspect.getfile(inspect.currentframe()))],
         substitute=True,
-        context={
-            "gpu_device_count": gpu_device_count(),
-        },
+        context=context,
     )
 
     marie.helper.extend_rest_interface = extend_rest_interface

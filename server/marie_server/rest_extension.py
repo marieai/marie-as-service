@@ -2,8 +2,10 @@ import asyncio
 import time
 import uuid
 from functools import partial
+from fastapi import FastAPI, Request, HTTPException
 from typing import TYPE_CHECKING, Any, Optional
-
+import traceback
+import sys
 from fastapi import Request
 from marie import Client
 from marie.api import extract_payload
@@ -108,7 +110,8 @@ async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = Tr
             key = "srcBase64"
         elif "srcFile" in payload:
             key = "srcFile"
-
+        elif "uri" in payload:
+            key = "uri"
         del payload[key]
 
     doc_id = value_from_payload_or_args(payload, "doc_id", default=checksum)
@@ -125,26 +128,50 @@ async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = Tr
 async def handle_request(
     api_tag: str, request: Request, client: Client, handler: callable
 ):
-    payload = await request.json()
-    job_id = generate_job_id()
-    default_logger.info(f"handle_request[{api_tag}] : {job_id}")
-    sync = strtobool(value_from_payload_or_args(payload, "sync", default=False))
+    try:
+        payload = await request.json()
+        job_id = generate_job_id()
+        default_logger.info(f"handle_request[{api_tag}] : {job_id}")
+        sync = strtobool(value_from_payload_or_args(payload, "sync", default=False))
 
-    task = asyncio.ensure_future(
-        process_request(api_tag, job_id, payload, partial(handler, client))
-    )
-    # run the task synchronously
-    if sync:
-        results = await asyncio.gather(task)
-        return results[0]
+        future = [
+            asyncio.ensure_future(
+                process_request(api_tag, job_id, payload, partial(handler, client))
+            )
+        ]
 
-    return {"jobid": job_id, "status": "ok"}
+        # run the task synchronously for debugging purposes
+        if sync:
+            results = await asyncio.gather(*future, return_exceptions=True)
+            if isinstance(results[0], Exception):
+                raise results[0]
+            return results[0]
+
+        return {"jobid": job_id, "status": "ok"}
+    except Exception as e:
+        default_logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 async def process_request(api_tag: str, job_id: str, payload: Any, handler: callable):
+    """
+    When request is processed, it will be marked as  `STARTED` and then `COMPLETED`.
+    If there is an error, it will be marked as `FAILED` with the error message and then `COMPLETED`
+    to indicate that the request is finished.
+
+    Args:
+        api_tag:
+        job_id:
+        payload:
+        handler:
+
+    Returns:
+    """
+
     status = "OK"
     job_tag = ""
     results = None
+
     try:
         default_logger.info(f"Starting request: {job_id}")
         parameters, input_docs = await parse_payload_to_docs(payload)
@@ -161,13 +188,27 @@ async def process_request(api_tag: str, job_id: str, payload: Any, handler: call
 
         results = await run(handler, input_docs, parameters)
         return results
-    except BaseException as error:
-        default_logger.error("processing error", error)
-        status = "ERROR"
+    except BaseException as e:
+        default_logger.error(f"processing error : {e}", exc_info=False)
+        status = "FAILED"
 
-        await mark_as_failed(job_id, api_tag, job_tag, status, int(time.time()), error)
+        # get the traceback and clear the frames to avoid memory leak
+        _, val, tb = sys.exc_info = sys.exc_info()
+        traceback.clear_frames(tb)
 
-        return {"jobid": job_id, "status": status, "error": error}
+        filename = tb.tb_frame.f_code.co_filename
+        name = tb.tb_frame.f_code.co_name
+        line_no = tb.tb_lineno
+
+        exc = {
+            "type": type(e).__name__,
+            "message": str(e),
+            "filename": filename.split("/")[-1],
+            "name": name,
+            "line_no": line_no,
+        }
+        results = str(e)
+        await mark_as_failed(job_id, api_tag, job_tag, status, int(time.time()), exc)
     finally:
         await mark_as_complete(
             job_id, api_tag, job_tag, status, int(time.time()), results
