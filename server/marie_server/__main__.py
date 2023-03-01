@@ -26,7 +26,6 @@ from marie_server.rest_extension import extend_rest_interface
 
 
 def setup_toast_events(toast_config: Dict[str, Any]):
-    print(toast_config)
     native_config = toast_config["native"]
     psql_config = toast_config["psql"]
     amazon_config = toast_config["amazon-mq"]

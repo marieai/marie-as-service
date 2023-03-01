@@ -150,6 +150,7 @@ async def handle_request(
         return {"jobid": job_id, "status": "ok"}
     except Exception as e:
         default_logger.error(f"Error: {e}")
+        raise e
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
