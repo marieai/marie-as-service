@@ -21,7 +21,7 @@ shared_config:
       username: ${{ ENV.AWS_MQ_USERNAME }}
       password: ${{ ENV.AWS_MQ_PASSWORD }}
       tls: True
-      virtualhost: /marie-ai
+      virtualhost: /
 
 
 # Executor configuration

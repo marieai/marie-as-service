@@ -56,23 +56,32 @@ def generate_job_id() -> str:
     return str(uuid.uuid4())
 
 
-def parse_response_to_payload(resp: DataRequest):
+def parse_response_to_payload(
+    resp: DataRequest, expect_return_value: Optional[bool] = True
+):
     """
-    We get raw response `marie.types.request.data.DataRequest`
-    and we will extract the returned payload (Dictionary object)
+    We get raw response `marie.types.request.data.DataRequest` and we will extract the returned payload (Dictionary object)
+    If the executor is not returning any value, we will return empty dictionary object. This is perfectly valid response
+    as we are not expecting any value from the executor.
 
-    :param resp:
-    :return:
+    :param expect_return_value:  if True, we expect that the response will contain `__results__` key
+    :param resp: response from the executor
+    :return:  payload
     """
+
     if "__results__" in resp.parameters:
         results = resp.parameters["__results__"]
         payload = list(results.values())[0]
         return payload
 
-    return {
-        "status": "FAILED",
-        "message": "are you calling valid endpoint, __results__ missing in params",
-    }
+    if expect_return_value:
+        # raise ValueError("Response does not contain __results__ key")
+        return {
+            "status": "FAILED",
+            "message": "are you calling valid endpoint, __results__ missing in params",
+        }
+
+    return {}
 
 
 async def parse_payload_to_docs(payload: Any, clear_payload: Optional[bool] = True):
@@ -150,7 +159,6 @@ async def handle_request(
         return {"jobid": job_id, "status": "ok"}
     except Exception as e:
         default_logger.error(f"Error: {e}")
-        raise e
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
