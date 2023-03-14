@@ -2,6 +2,9 @@ import inspect
 import os
 import sys
 from typing import Dict, Any, Optional
+
+from marie.document import TrOcrIcrProcessor
+from marie.serve.runtimes.gateway import HTTPGateway
 from rich.traceback import install
 
 import marie.helper
@@ -23,6 +26,11 @@ from marie.constants import (
 )
 
 from marie_server.rest_extension import extend_rest_interface
+
+import torch
+
+torch.set_float32_matmul_precision("high")
+torch.backends.cudnn.benchmark = False
 
 
 def setup_toast_events(toast_config: Dict[str, Any]):
@@ -61,10 +69,6 @@ if __name__ == "__main__":
 
     from marie import Flow
 
-    import torch
-
-    torch.set_float32_matmul_precision("high")
-    torch.backends.cudnn.benchmark = False
     # print(torch._dynamo.list_backends())e
 
     if len(sys.argv) > 1:
@@ -100,7 +104,6 @@ if __name__ == "__main__":
         substitute=True,
         context=context,
     )
-
     marie.helper.extend_rest_interface = extend_rest_interface
 
     with f:
